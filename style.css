@@ -1,0 +1,36 @@
+/* Extra tiny helpers on top of Tailwind */
+
+/* Shared glass card style */
+.glass-card {
+  @apply rounded-2xl bg-white/10 p-5 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)];
+}
+
+/* Pills in the skills snapshot */
+.skill-pill {
+  @apply whitespace-nowrap rounded-full bg-white/10 px-4 py-2 text-xs sm:text-sm ring-1 ring-white/20;
+}
+
+/* Simple fade/slide animation for tab transitions (applied via JS) */
+.tab-page {
+  transition: opacity 180ms ease-out, transform 180ms ease-out;
+}
+
+.tab-page.is-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.tab-page.is-inactive {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* Morph card subtle hover scale (handled with JS toggling open/closed) */
+.js-morph-card {
+  transition: transform 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.js-morph-card.open {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 40px -10px rgba(0, 0, 0, 0.8);
+}
