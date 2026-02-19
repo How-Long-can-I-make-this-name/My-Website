@@ -1,600 +1,737 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Oscar Beckett – Resume</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <head>
+    <meta charset="UTF-8" />
+    <title>Oscar Beckett — Resume</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Tailwind CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind via CDN (good for GitHub Pages). For production/perf, you can build Tailwind locally. -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Lucide icons -->
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+      /* Smooth panel transitions (fade/slide) */
+      .page-panel {
+        transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+      }
+      .page-panel.hidden-panel {
+        opacity: 0;
+        transform: translateY(8px);
+        pointer-events: none;
+        position: absolute;
+        inset: 0;
+      }
+      .page-panel.active-panel {
+        opacity: 1;
+        transform: translateY(0);
+        position: static;
+      }
 
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body class="min-h-screen w-full bg-[radial-gradient(60%_80%_at_50%_0%,_#0b1220_0%,_#0a0f1a_35%,_#05070c_100%)] text-slate-100 relative">
+      /* Hover/tap reveal cards (morph-ish) */
+      .hover-card {
+        transition: box-shadow 0.25s ease-out, transform 0.25s ease-out,
+          background-color 0.25s ease-out;
+      }
+      .hover-card.open {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.8);
+        background-color: rgba(255, 255, 255, 0.14);
+      }
+      .card-summary,
+      .card-details {
+        transition: opacity 0.25s ease-out, transform 0.25s ease-out,
+          max-height 0.35s ease-out;
+        overflow: hidden;
+      }
+      .card-summary {
+        max-height: 84px;
+      }
+      .card-details {
+        max-height: 0;
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      .hover-card.open .card-summary {
+        opacity: 0;
+        transform: translateY(-4px);
+        max-height: 0;
+      }
+      .hover-card.open .card-details {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 360px;
+      }
 
-  <!-- Toast -->
-  <div
-    id="toast"
-    class="fixed top-5 left-1/2 z-50 -translate-x-1/2 rounded-xl bg-white/10 px-4 py-2 text-sm text-white backdrop-blur-md ring-1 ring-white/20 flex items-center gap-2 opacity-0 pointer-events-none transition-opacity duration-200"
-    role="status"
-    aria-live="polite"
-  >
-    <i data-lucide="check" class="h-4 w-4"></i>
-    <span id="toast-text"></span>
-  </div>
+      /* Toast transitions */
+      #toast {
+        transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+      }
 
-  <!-- Ambient gradient orbs -->
-  <div class="pointer-events-none fixed inset-0 -z-10">
-    <div class="absolute -top-20 -left-20 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl"></div>
-    <div class="absolute -bottom-24 -right-16 h-[28rem] w-[28rem] rounded-full bg-cyan-500/10 blur-3xl"></div>
-  </div>
+      /* Slightly smoother nav hover scaling */
+      .navbtn {
+        transition: background-color 0.18s ease-out, transform 0.25s ease-out;
+      }
+      .navbtn:hover {
+        transform: scale(1.01);
+      }
+      .tabbtn {
+        transition: background-color 0.18s ease-out, transform 0.25s ease-out;
+      }
+      .tabbtn:hover {
+        transform: scale(1.01);
+      }
+    </style>
+  </head>
 
-  <!-- Shell -->
-  <div class="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 py-10 lg:grid-cols-[280px_1fr]">
-    <!-- Sidebar -->
-    <aside class="sticky top-6 h-max">
-      <div class="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]">
-        <!-- Header -->
-        <div class="flex items-start gap-4">
-          <div class="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl ring-1 ring-white/20">
-            <div class="h-full w-full bg-gradient-to-br from-indigo-400/60 to-cyan-400/50"></div>
-          </div>
-          <div>
-            <h1 class="text-xl font-semibold tracking-tight">Oscar Beckett</h1>
-            <p class="text-sm text-slate-300/90">
-              Outdoor adventurer &amp; student • Brisbane, QLD
-            </p>
-            <p class="mt-2 flex items-center gap-2 text-xs text-slate-400/90">
-              <i data-lucide="map-pin" class="h-3.5 w-3.5"></i>
-              Open to opportunities • GMT+10
-            </p>
-          </div>
-        </div>
+  <body class="bg-slate-950 text-slate-100">
+    <!-- Toast -->
+    <div
+      id="toast"
+      class="fixed top-5 left-1/2 z-50 -translate-x-1/2 rounded-xl bg-white/10 px-4 py-2 text-sm text-white backdrop-blur-md ring-1 ring-white/20 opacity-0 pointer-events-none"
+      role="status"
+      aria-live="polite"
+    >
+      ✅ <span id="toast-text">Copied</span>
+    </div>
 
-        <!-- Nav -->
-        <nav class="mt-6 space-y-2">
-          <button
-            class="js-nav-btn group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition bg-white/10 ring-1 ring-white/20"
-            data-page-target="experience"
+    <!-- Ambient gradient orbs -->
+    <div class="pointer-events-none fixed inset-0 -z-10">
+      <div
+        class="absolute -top-20 -left-20 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl"
+      ></div>
+      <div
+        class="absolute -bottom-24 -right-16 h-[28rem] w-[28rem] rounded-full bg-cyan-500/10 blur-3xl"
+      ></div>
+    </div>
+
+    <div
+      class="min-h-screen w-full bg-[radial-gradient(60%_80%_at_50%_0%,_#0b1220_0%,_#0a0f1a_35%,_#05070c_100%)] text-slate-100 relative"
+    >
+      <div
+        class="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 py-10 lg:grid-cols-[280px_1fr]"
+      >
+        <!-- Sidebar -->
+        <aside class="sticky top-6 h-max">
+          <div
+            class="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]"
           >
-            <i data-lucide="briefcase" class="h-5 w-5 opacity-90"></i>
-            <span class="font-medium tracking-tight">Experience</span>
-          </button>
-          <button
-            class="js-nav-btn group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-white/5"
-            data-page-target="education"
-          >
-            <i data-lucide="graduation-cap" class="h-5 w-5 opacity-90"></i>
-            <span class="font-medium tracking-tight">Education</span>
-          </button>
-          <button
-            class="js-nav-btn group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-white/5"
-            data-page-target="hobbies"
-          >
-            <i data-lucide="gamepad-2" class="h-5 w-5 opacity-90"></i>
-            <span class="font-medium tracking-tight">Hobbies</span>
-          </button>
-          <button
-            class="js-nav-btn group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-white/5"
-            data-page-target="references"
-          >
-            <i data-lucide="users" class="h-5 w-5 opacity-90"></i>
-            <span class="font-medium tracking-tight">References</span>
-          </button>
-          <button
-            class="js-nav-btn group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-white/5"
-            data-page-target="download"
-          >
-            <i data-lucide="download" class="h-5 w-5 opacity-90"></i>
-            <span class="font-medium tracking-tight">Download</span>
-          </button>
-        </nav>
-
-        <!-- Quick actions -->
-        <div class="mt-6 grid grid-cols-2 gap-2 text-xs text-slate-300/90">
-          <button
-            class="js-copy-btn flex items-center justify-center gap-2 rounded-lg bg-white/5 px-3 py-2 ring-1 ring-white/10 hover:bg-white/10"
-            data-copy-label="email"
-            data-copy-text="oscar.p.beckett@gmail.com"
-          >
-            <i data-lucide="mail" class="h-4 w-4"></i>
-            email
-          </button>
-          <button
-            class="js-copy-btn flex items-center justify-center gap-2 rounded-lg bg-white/5 px-3 py-2 ring-1 ring-white/10 hover:bg-white/10"
-            data-copy-label="phone number"
-            data-copy-text="+61434470221"
-          >
-            <i data-lucide="phone" class="h-4 w-4"></i>
-            phone
-          </button>
-        </div>
-      </div>
-    </aside>
-
-    <!-- Content -->
-    <main class="space-y-6">
-      <div class="rounded-3xl border border-white/10 bg-white/10 p-1 backdrop-blur-2xl">
-        <!-- Tab bar -->
-        <div class="relative flex w-full flex-wrap items-center gap-2 p-2">
-          <button
-            class="js-tab-btn relative rounded-xl px-3 py-2 text-sm text-slate-200/90 transition hover:bg-white/5 bg-white/10 ring-1 ring-white/20"
-            data-page-target="experience"
-          >
-            <div class="flex items-center gap-2">
-              <i data-lucide="briefcase" class="h-4 w-4"></i>
-              <span>Experience</span>
-            </div>
-          </button>
-          <button
-            class="js-tab-btn relative rounded-xl px-3 py-2 text-sm text-slate-200/90 transition hover:bg-white/5"
-            data-page-target="education"
-          >
-            <div class="flex items-center gap-2">
-              <i data-lucide="graduation-cap" class="h-4 w-4"></i>
-              <span>Education</span>
-            </div>
-          </button>
-          <button
-            class="js-tab-btn relative rounded-xl px-3 py-2 text-sm text-slate-200/90 transition hover:bg-white/5"
-            data-page-target="hobbies"
-          >
-            <div class="flex items-center gap-2">
-              <i data-lucide="gamepad-2" class="h-4 w-4"></i>
-              <span>Hobbies</span>
-            </div>
-          </button>
-          <button
-            class="js-tab-btn relative rounded-xl px-3 py-2 text-sm text-slate-200/90 transition hover:bg-white/5"
-            data-page-target="references"
-          >
-            <div class="flex items-center gap-2">
-              <i data-lucide="users" class="h-4 w-4"></i>
-              <span>References</span>
-            </div>
-          </button>
-          <button
-            class="js-tab-btn relative rounded-xl px-3 py-2 text-sm text-slate-200/90 transition hover:bg-white/5"
-            data-page-target="download"
-          >
-            <div class="flex items-center gap-2">
-              <i data-lucide="download" class="h-4 w-4"></i>
-              <span>Download</span>
-            </div>
-          </button>
-        </div>
-
-        <!-- Tab content wrapper -->
-        <div class="rounded-2xl bg-black/20 p-6 ring-1 ring-white/10 min-h-[420px] md:min-h-[360px]">
-          <!-- EXPERIENCE -->
-          <section id="experience" class="tab-page grid gap-4 md:grid-cols-2">
-            <!-- About Me card -->
-            <div class="glass-card">
-              <div class="mb-3 flex items-center justify-between gap-3">
-                <div class="flex w-full items-center justify-between gap-3">
-                  <h3 class="text-base font-semibold tracking-tight text-white/95">
-                    About Me
-                    </h3>
-                  <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                    At a Glance
-                  </span>
-                </div>
-              </div>
-              <p class="text-sm text-slate-200/90">
-                Motivated, responsible, and friendly high-school student with experience across customer service,
-                hospitality, and outdoor activities. Reliable team member who adapts quickly, communicates well, and
-                contributes positively to any environment.
-              </p>
-            </div>
-
-            <!-- Job 1 -->
-            <div class="js-morph-card group overflow-hidden rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)] transition-transform">
-              <!-- summary -->
-              <button class="js-morph-summary flex w-full items-center justify-between gap-3 px-5 py-4">
-                <div class="min-w-0">
-                  <h3 class="truncate text-base font-semibold tracking-tight text-white/95">
-                    Trolley Collector
-                  </h3>
-                  <p class="mt-1 truncate text-xs text-slate-300/85">
-                    Controlled Trolley Services (Kmart Stafford)
-                  </p>
-                </div>
-                <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                  Dec 2023 – Jul 2024
-                </span>
-              </button>
-              <!-- details -->
-              <div class="js-morph-details hidden px-5 py-5">
-                <div class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                  <h3 class="text-base font-semibold tracking-tight text-white/95">
-                    Trolley Collector
-                  </h3>
-                  <div class="flex flex-wrap items-center gap-2 text-xs">
-                    <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">
-                      Controlled Trolley Services (Kmart Stafford)
-                    </span>
-                    <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">
-                      Dec 2023 – Jul 2024
-                    </span>
-                  </div>
-                </div>
-                <ul class="list-disc space-y-2 pl-5 text-sm text-slate-200/90">
-                  <li>Collected and maintained trolleys across large retail carparks.</li>
-                  <li>Provided approachable, helpful customer service on-site.</li>
-                  <li>Upheld safety and efficiency during peak trading periods.</li>
-                </ul>
-              </div>
-            </div>
-            <!-- Job 2 -->
-            <div class="js-morph-card group overflow-hidden rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)] transition-transform">
-              <button class="js-morph-summary flex w-full items-center justify-between gap-3 px-5 py-4">
-                <div class="min-w-0">
-                  <h3 class="truncate text-base font-semibold tracking-tight text-white/95">
-                    Barista
-                  </h3>
-                  <p class="mt-1 truncate text-xs text-slate-300/85">
-                    Zarraffa's Coffee, Brisbane
-                  </p>
-                </div>
-                <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                  Sep 2022 – Jan 2023
-                </span>
-              </button>
-              <div class="js-morph-details hidden px-5 py-5">
-                <div class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                  <h3 class="text-base font-semibold tracking-tight text-white/95">
-                    Barista
-                  </h3>
-                  <div class="flex flex-wrap items-center gap-2 text-xs">
-                    <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">
-                      Zarraffa's Coffee, Brisbane
-                    </span>
-                    <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">
-                      Sep 2022 – Jan 2023
-                    </span>
-                  </div>
-                </div>
-                <ul class="list-disc space-y-2 pl-5 text-sm text-slate-200/90">
-                  <li>Prepared espresso beverages to brand standards at volume.</li>
-                  <li>Delivered friendly service and managed POS during rushes.</li>
-                </ul>
-              </div>
-            </div>
-
-            <!-- Job 3 -->
-            <div class="js-morph-card group overflow-hidden rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)] transition-transform">
-              <button class="js-morph-summary flex w-full items-center justify-between gap-3 px-5 py-4">
-                <div class="min-w-0">
-                  <h3 class="truncate text-base font-semibold tracking-tight text-white/95">
-                    Service &amp; Sales Lead
-                  </h3>
-                  <p class="mt-1 truncate text-xs text-slate-300/85">
-                    Oscar’s Mowing Services, Brisbane
-                  </p>
-                </div>
-                <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                  Sep 2021 – Jul 2023
-                </span>
-              </button>
-              <div class="js-morph-details hidden px-5 py-5">
-                <div class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                  <h3 class="text-base font-semibold tracking-tight text-white/95">
-                    Service &amp; Sales Lead
-                  </h3>
-                  <div class="flex flex-wrap items-center gap-2 text-xs">
-                    <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">
-                      Oscar’s Mowing Services, Brisbane
-                    </span>
-                    <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">
-                      Sep 2021 – Jul 2023
-                    </span>
-                  </div>
-                </div>
-                <ul class="list-disc space-y-2 pl-5 text-sm text-slate-200/90">
-                  <li>
-                    Delivered economical landscaping for local clients (weeding, ant control, pet-area cleanups).
-                  </li>
-                  <li>Managed bookings, quotes, and repeat customer relationships.</li>
-                </ul>
-              </div>
-            </div>
-          </section>
-
-          <!-- EDUCATION -->
-          <section id="education" class="tab-page grid gap-4 md:grid-cols-2 hidden">
-            <!-- School 1 -->
-            <div class="js-morph-card group overflow-hidden rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)] transition-transform">
-              <button class="js-morph-summary flex w-full items-center justify-between gap-3 px-5 py-4">
-                <div class="min-w-0">
-                  <h3 class="truncate text-base font-semibold tracking-tight text-white/95">
-                    Senior Secondary (STEM &amp; Arts focus)
-                  </h3>
-                  <p class="mt-1 truncate text-xs text-slate-300/85">
-                    Kedron State High School, Brisbane
-                  </p>
-                </div>
-                <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                  2020 – 2025
-                </span>
-              </button>
-              <div class="js-morph-details hidden px-5 py-5">
-                <div class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                  <h3 class="text-base font-semibold tracking-tight text-white/95">
-                    Senior Secondary (STEM &amp; Arts focus)
-                  </h3>
-                  <div class="flex flex-wrap items-center gap-2 text-xs">
-                    <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">
-                      Kedron State High School, Brisbane
-                    </span>
-                    <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">
-                      2020 – 2025
-                    </span>
-                  </div>
-                </div>
-                <p class="text-sm text-slate-200/90">
-                  Math Methods, Japanese, Engineering, Physics, Literature, English &amp; Lit Extension; first trombone
-                  in Symphony Orchestra, Wind Symphony, Brass Ensemble (AMEB L7).
-                </p>
-              </div>
-            </div>
-
-            <!-- School 2 -->
-            <div class="js-morph-card group overflow-hidden rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)] transition-transform">
-              <button class="js-morph-summary flex w-full items-center justify-between gap-3 px-5 py-4">
-                <div class="min-w-0">
-                  <h3 class="truncate text-base font-semibold tracking-tight text-white/95">
-                    Primary School
-                  </h3>
-                  <p class="mt-1 truncate text-xs text-slate-300/85">
-                    Ascot State School, Brisbane
-                  </p>
-                </div>
-                <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                  2013 – 2019
-                </span>
-              </button>
-              <div class="js-morph-details hidden px-5 py-5">
-                <div class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                  <h3 class="text-base font-semibold tracking-tight text-white/95">
-                    Primary School
-                  </h3>
-                  <div class="flex flex-wrap items-center gap-2 text-xs">
-                    <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">
-                      Ascot State School, Brisbane
-                    </span>
-                    <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">
-                      2013 – 2019
-                    </span>
-                  </div>
-                </div>
-                <p class="text-sm text-slate-200/90">
-                  Core subjects, ensembles incl. Senior Band, Brass Ensemble, Stage Band (AMEB L4).
-                </p>
-              </div>
-            </div>
-
-            <!-- Skills Snapshot -->
-            <div class="glass-card md:col-span-2">
-              <div class="mb-3 flex items-center justify-between gap-3">
-                <div class="flex w-full items-center justify-between gap-3">
-                  <h3 class="text-base font-semibold tracking-tight text-white/95">
-                    Skills Snapshot
-                  </h3>
-                  <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                    Updated
-                  </span>
-                </div>
-              </div>
-              <div class="flex flex-wrap justify-center gap-2 text-sm text-slate-200/90">
-                <span class="skill-pill">Teamwork</span>
-                <span class="skill-pill">Leadership</span>
-                <span class="skill-pill">Communication</span>
-                <span class="skill-pill">Planning</span>
-                <span class="skill-pill">Technology (IT &amp; hardware)</span>
-                <span class="skill-pill">Customer Service</span>
-                <span class="skill-pill">Time Management</span>
-                <span class="skill-pill">Problem Solving</span>
-                <span class="skill-pill">Basic Japanese</span>
-              </div>
-            </div>
-          </section>
-
-          <!-- HOBBIES -->
-          <section id="hobbies" class="tab-page grid gap-4 md:grid-cols-2 hidden">
-            <!-- Hobby 1 -->
-            <div class="js-morph-card group overflow-hidden rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)] transition-transform">
-              <button class="js-morph-summary flex w-full items-center justify-between gap-3 px-5 py-4">
-                <h3 class="truncate text-base font-semibold tracking-tight text-white/95">
-                  Scouting &amp; Leadership
-                </h3>
-                <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                  Awards
-                </span>
-              </button>
-              <div class="js-morph-details hidden px-5 py-5">
-                <div class="mb-3 flex items-center justify-between gap-2">
-                  <h3 class="text-base font-semibold tracking-tight text-white/95">
-                    Scouting &amp; Leadership
-                  </h3>
-                  <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                    Awards
-                  </span>
-                </div>
-                <p class="text-sm text-slate-200/90">
-                  Grey Wolf Award (2018), Australian Scout Medallion (2022), King’s Scout Award (2025).
-                  Venturer service leader at Australian Jamboree 2025. Regularly plan and run activities.
-                </p>
-              </div>
-            </div>
-
-            <!-- Hobby 2 -->
-            <div class="js-morph-card group overflow-hidden rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)] transition-transform">
-              <button class="js-morph-summary flex w-full items-center justify-between gap-3 px-5 py-4">
-                <h3 class="truncate text-base font-semibold tracking-tight text-white/95">
-                  Baseball
-                </h3>
-                <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                  Club &amp; Rep
-                </span>
-              </button>
-              <div class="js-morph-details hidden px-5 py-5">
-                <div class="mb-3 flex items-center justify-between gap-2">
-                  <h3 class="text-base font-semibold tracking-tight text-white/95">
-                    Baseball
-                  </h3>
-                  <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                    Club &amp; Rep
-                  </span>
-                </div>
-                <p class="text-sm text-slate-200/90">
-                  Playing since 2016; state/national representative level since 2017. Premier team for Windsor Royals
-                  Senior League 2023/24 season.
-                </p>
-              </div>
-            </div>
-
-            <!-- Hobby 3 -->
-            <div class="js-morph-card group overflow-hidden rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)] transition-transform">
-              <button class="js-morph-summary flex w-full items-center justify-between gap-3 px-5 py-4">
-                <h3 class="truncate text-base font-semibold tracking-tight text-white/95">
-                  Mountain Biking &amp; Cycle Touring
-                </h3>
-                <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                  Outdoors
-                </span>
-              </button>
-              <div class="js-morph-details hidden px-5 py-5">
-                <div class="mb-3 flex items-center justify-between gap-2">
-                  <h3 class="text-base font-semibold tracking-tight text-white/95">
-                    Mountain Biking &amp; Cycle Touring
-                  </h3>
-                  <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                    Outdoors
-                  </span>
-                </div>
-                <p class="text-sm text-slate-200/90">
-                  BVRT completed three times; introducing bikepacking to Scouts and peers.
-                </p>
-              </div>
-            </div>
-
-            <!-- Hobby 4 -->
-            <div class="js-morph-card group overflow-hidden rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)] transition-transform">
-              <button class="js-morph-summary flex w-full items-center justify-between gap-3 px-5 py-4">
-                <h3 class="truncate text-base font-semibold tracking-tight text-white/95">
-                  Karate (Go-Kan-Ryu)
-                </h3>
-                <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                  Brown Belt
-                </span>
-              </button>
-              <div class="js-morph-details hidden px-5 py-5">
-                <div class="mb-3 flex items-center justify-between gap-2">
-                  <h3 class="text-base font-semibold tracking-tight text-white/95">
-                    Karate (Go-Kan-Ryu)
-                  </h3>
-                  <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                    Brown Belt
-                  </span>
-                </div>
-                <p class="text-sm text-slate-200/90">
-                  Training since 2011; assisting in junior dojo sessions and working toward 1st Black Tip.
-                </p>
-              </div>
-            </div>
-
-            <!-- Hobby 5 -->
-            <div class="js-morph-card group overflow-hidden rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)] transition-transform">
-              <button class="js-morph-summary flex w-full items-center justify-between gap-3 px-5 py-4">
-                <h3 class="truncate text-base font-semibold tracking-tight text-white/95">
-                  CAD and 3D Printing
-                </h3>
-                <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                  Maker
-                </span>
-              </button>
-              <div class="js-morph-details hidden px-5 py-5">
-                <div class="mb-3 flex items-center justify-between gap-2">
-                  <h3 class="text-base font-semibold tracking-tight text-white/95">
-                    CAD and 3D Printing
-                  </h3>
-                  <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                    Maker
-                  </span>
-                </div>
-                <p class="text-sm text-slate-200/90">
-                  Owner of a Bambu Labs A1, and enjoy using Autodesk Inventor and Blender to create new things to be
-                  printed.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <!-- REFERENCES -->
-          <section id="references" class="tab-page grid gap-4 md:grid-cols-2 hidden">
-            <div class="glass-card">
-              <div class="mb-3 flex items-center justify-between gap-3">
-                <div class="flex w-full items-center justify-between gap-3">
-                  <h3 class="text-base font-semibold tracking-tight text-white/95">
-                    Matthew Gard
-                  </h3>
-                  <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                    Teacher
-                  </span>
-                </div>
-              </div>
-              <p class="text-sm text-slate-200/90">Available on request</p>
-            </div>
-
-            <div class="glass-card">
-              <div class="mb-3 flex items-center justify-between gap-3">
-                <div class="flex w-full items-center justify-between gap-3">
-                  <h3 class="text-base font-semibold tracking-tight text-white/95">
-                    Employers &amp; Team Leaders
-                  </h3>
-                  <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                    Workplace supervisors
-                  </span>
-                </div>
-              </div>
-              <p class="text-sm text-slate-200/90">Available on request</p>
-            </div>
-          </section>
-
-          <!-- DOWNLOAD -->
-          <section id="download" class="tab-page grid gap-4 md:grid-cols-2 hidden">
-            <div class="glass-card md:col-span-2">
-              <div class="mb-3 flex items-center justify-between gap-3">
-                <div class="flex w-full items-center justify-between gap-3">
-                  <h3 class="text-base font-semibold tracking-tight text-white/95">
-                    Download my resume (Oscar_Beckett_CV_2.docx)
-                  </h3>
-                  <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">
-                    Printable
-                  </span>
-                </div>
-              </div>
-              <p class="mb-4 text-sm text-slate-200/90">
-                Click below to download the Word document version of my resume.
-              </p>
-              <a
-                href="Oscar_Beckett_CV_2.docx"
-                download
-                class="inline-flex items-center gap-2 rounded-xl bg-white/90 px-4 py-2 font-medium text-slate-900 ring-1 ring-white/30 transition hover:bg-white"
+            <!-- Header -->
+            <div class="flex items-start gap-4">
+              <div
+                class="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl ring-1 ring-white/20"
               >
-                <i data-lucide="download" class="h-4 w-4"></i>
-                Download Resume
-              </a>
+                <div
+                  class="h-full w-full bg-gradient-to-br from-indigo-400/60 to-cyan-400/50"
+                ></div>
+              </div>
+              <div>
+                <h1 class="text-xl font-semibold tracking-tight">
+                  Oscar Beckett
+                </h1>
+                <p class="text-sm text-slate-300/90">
+                  Outdoor adventurer &amp; student • Brisbane, QLD
+                </p>
+                <p class="mt-2 flex items-center gap-2 text-xs text-slate-400/90">
+                  <span class="inline-block h-2.5 w-2.5 rounded-full bg-cyan-400"></span>
+                  Open to opportunities • GMT+10
+                </p>
+              </div>
             </div>
-          </section>
-        </div>
-      </div>
-    </main>
-  </div>
 
-  <script src="script.js"></script>
-</body>
+            <!-- Sidebar nav -->
+            <nav class="mt-6 space-y-2" id="sidebar-nav">
+              <button
+                data-page="experience"
+                class="navbtn group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left bg-white/10 ring-1 ring-white/20"
+              >
+                <span class="flex h-5 w-5 items-center justify-center rounded-md bg-white/10 text-xs">💼</span>
+                <span class="font-medium tracking-tight">Experience</span>
+              </button>
+
+              <button
+                data-page="education"
+                class="navbtn group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left hover:bg-white/5"
+              >
+                <span class="flex h-5 w-5 items-center justify-center rounded-md bg-white/10 text-xs">🎓</span>
+                <span class="font-medium tracking-tight">Education</span>
+              </button>
+
+              <button
+                data-page="hobbies"
+                class="navbtn group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left hover:bg-white/5"
+              >
+                <span class="flex h-5 w-5 items-center justify-center rounded-md bg-white/10 text-xs">🎮</span>
+                <span class="font-medium tracking-tight">Hobbies</span>
+              </button>
+
+              <button
+                data-page="references"
+                class="navbtn group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left hover:bg-white/5"
+              >
+                <span class="flex h-5 w-5 items-center justify-center rounded-md bg-white/10 text-xs">👥</span>
+                <span class="font-medium tracking-tight">References</span>
+              </button>
+
+              <button
+                data-page="download"
+                class="navbtn group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left hover:bg-white/5"
+              >
+                <span class="flex h-5 w-5 items-center justify-center rounded-md bg-white/10 text-xs">⬇️</span>
+                <span class="font-medium tracking-tight">Download</span>
+              </button>
+            </nav>
+
+            <!-- Quick actions -->
+            <div class="mt-6 grid grid-cols-2 gap-2 text-xs text-slate-300/90">
+              <button
+                data-copy="email"
+                class="flex items-center justify-center gap-2 rounded-lg bg-white/5 px-3 py-2 ring-1 ring-white/10 hover:bg-white/10"
+              >
+                ✉️ email
+              </button>
+              <button
+                data-copy="phone"
+                class="flex items-center justify-center gap-2 rounded-lg bg-white/5 px-3 py-2 ring-1 ring-white/10 hover:bg-white/10"
+              >
+                📞 phone
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main content -->
+        <main class="space-y-6">
+          <div class="rounded-3xl border border-white/10 bg-white/10 p-1 backdrop-blur-2xl">
+            <!-- Top tabs -->
+            <div class="relative flex w-full flex-wrap items-center gap-2 p-2" id="tab-bar">
+              <button data-page="experience" class="tabbtn tab-btn relative rounded-xl px-3 py-2 text-sm text-slate-200/90 bg-white/10 ring-1 ring-white/20">
+                <div class="flex items-center gap-2">
+                  <span class="flex h-4 w-4 items-center justify-center rounded bg-white/10 text-[10px]">💼</span>
+                  <span>Experience</span>
+                </div>
+              </button>
+              <button data-page="education" class="tabbtn tab-btn relative rounded-xl px-3 py-2 text-sm text-slate-200/90 hover:bg-white/5">
+                <div class="flex items-center gap-2">
+                  <span class="flex h-4 w-4 items-center justify-center rounded bg-white/10 text-[10px]">🎓</span>
+                  <span>Education</span>
+                </div>
+              </button>
+              <button data-page="hobbies" class="tabbtn tab-btn relative rounded-xl px-3 py-2 text-sm text-slate-200/90 hover:bg-white/5">
+                <div class="flex items-center gap-2">
+                  <span class="flex h-4 w-4 items-center justify-center rounded bg-white/10 text-[10px]">🎮</span>
+                  <span>Hobbies</span>
+                </div>
+              </button>
+              <button data-page="references" class="tabbtn tab-btn relative rounded-xl px-3 py-2 text-sm text-slate-200/90 hover:bg-white/5">
+                <div class="flex items-center gap-2">
+                  <span class="flex h-4 w-4 items-center justify-center rounded bg-white/10 text-[10px]">👥</span>
+                  <span>References</span>
+                </div>
+              </button>
+              <button data-page="download" class="tabbtn tab-btn relative rounded-xl px-3 py-2 text-sm text-slate-200/90 hover:bg-white/5">
+                <div class="flex items-center gap-2">
+                  <span class="flex h-4 w-4 items-center justify-center rounded bg-white/10 text-[10px]">⬇️</span>
+                  <span>Download</span>
+                </div>
+              </button>
+            </div>
+
+            <div class="rounded-2xl bg-black/20 p-6 ring-1 ring-white/10 relative overflow-hidden">
+              <div id="pages-container" class="relative">
+                <!-- EXPERIENCE -->
+                <section id="page-experience" class="page-panel active-panel grid gap-4 md:grid-cols-2">
+                  <!-- About me -->
+                  <div class="rounded-2xl bg-white/10 p-5 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]">
+                    <div class="mb-3 flex items-center justify-between gap-3">
+                      <h3 class="text-base font-semibold tracking-tight text-white/95">About Me</h3>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">At a Glance</span>
+                    </div>
+                    <p class="text-sm text-slate-200/90">
+                      Motivated, responsible, and friendly high-school student with experience across customer service, hospitality, and outdoor activities. Reliable team member who adapts quickly, communicates well, and contributes positively to any environment.
+                    </p>
+                  </div>
+
+                  <!-- Highlights -->
+                  <div class="rounded-2xl bg-white/10 p-5 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]">
+                    <div class="mb-3 flex items-center justify-between gap-3">
+                      <h3 class="text-base font-semibold tracking-tight text-white/95">Highlights</h3>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Quick</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                      <span class="rounded-full bg-white/10 px-3 py-1.5 text-xs sm:text-sm text-slate-200/90 ring-1 ring-white/20">Customer-first</span>
+                      <span class="rounded-full bg-white/10 px-3 py-1.5 text-xs sm:text-sm text-slate-200/90 ring-1 ring-white/20">Safety-focused</span>
+                      <span class="rounded-full bg-white/10 px-3 py-1.5 text-xs sm:text-sm text-slate-200/90 ring-1 ring-white/20">Reliable under pressure</span>
+                      <span class="rounded-full bg-white/10 px-3 py-1.5 text-xs sm:text-sm text-slate-200/90 ring-1 ring-white/20">Fast learner</span>
+                      <span class="rounded-full bg-white/10 px-3 py-1.5 text-xs sm:text-sm text-slate-200/90 ring-1 ring-white/20">Team player</span>
+                      <span class="rounded-full bg-white/10 px-3 py-1.5 text-xs sm:text-sm text-slate-200/90 ring-1 ring-white/20">Good communicator</span>
+                    </div>
+                  </div>
+
+                  <!-- Sales -->
+                  <article class="hover-card rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]" data-hover-card>
+                    <button type="button" class="card-summary flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
+                      <div class="min-w-0">
+                        <h3 class="truncate text-base font-semibold tracking-tight text-white/95">Sales</h3>
+                        <p class="mt-1 truncate text-xs text-slate-300/85">99 Bikes</p>
+                      </div>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Dec 2024 – Pres.</span>
+                    </button>
+                    <div class="card-details px-5 py-5">
+                      <div class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <h3 class="text-base font-semibold tracking-tight text-white/95">Sales</h3>
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                          <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">99 Bikes</span>
+                          <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">Dec 2024 – Pres.</span>
+                        </div>
+                      </div>
+                      <ul class="list-disc space-y-2 pl-5 text-sm text-slate-200/90">
+                        <li>People-focused sales role with an emphasis on understanding customer needs.</li>
+                        <li>Ensuring each customer leaves with exactly what they both want and need.</li>
+                        <li>Providing product guidance, technical insight, and genuine service.</li>
+                      </ul>
+                    </div>
+                  </article>
+
+                  <!-- Trolley -->
+                  <article class="hover-card rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]" data-hover-card>
+                    <button type="button" class="card-summary flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
+                      <div class="min-w-0">
+                        <h3 class="truncate text-base font-semibold tracking-tight text-white/95">Trolley Collector</h3>
+                        <p class="mt-1 truncate text-xs text-slate-300/85">Controlled Trolley Services (Kmart Stafford)</p>
+                      </div>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Dec 2023 – Jul 2024</span>
+                    </button>
+                    <div class="card-details px-5 py-5">
+                      <div class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <h3 class="text-base font-semibold tracking-tight text-white/95">Trolley Collector</h3>
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                          <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">Controlled Trolley Services (Kmart Stafford)</span>
+                          <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">Dec 2023 – Jul 2024</span>
+                        </div>
+                      </div>
+                      <ul class="list-disc space-y-2 pl-5 text-sm text-slate-200/90">
+                        <li>Collected and maintained trolleys across large retail carparks.</li>
+                        <li>Provided approachable, helpful customer service on-site.</li>
+                        <li>Upheld safety and efficiency during peak trading periods.</li>
+                      </ul>
+                    </div>
+                  </article>
+
+                  <!-- Barista -->
+                  <article class="hover-card rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]" data-hover-card>
+                    <button type="button" class="card-summary flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
+                      <div class="min-w-0">
+                        <h3 class="truncate text-base font-semibold tracking-tight text-white/95">Barista</h3>
+                        <p class="mt-1 truncate text-xs text-slate-300/85">Zarraffa's Coffee, Brisbane</p>
+                      </div>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Sep 2022 – Jan 2023</span>
+                    </button>
+                    <div class="card-details px-5 py-5">
+                      <div class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <h3 class="text-base font-semibold tracking-tight text-white/95">Barista</h3>
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                          <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">Zarraffa's Coffee, Brisbane</span>
+                          <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">Sep 2022 – Jan 2023</span>
+                        </div>
+                      </div>
+                      <ul class="list-disc space-y-2 pl-5 text-sm text-slate-200/90">
+                        <li>Prepared espresso beverages to brand standards at volume.</li>
+                        <li>Delivered friendly service and managed POS during rushes.</li>
+                      </ul>
+                    </div>
+                  </article>
+
+                  <!-- Mowing -->
+                  <article class="hover-card rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]" data-hover-card>
+                    <button type="button" class="card-summary flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
+                      <div class="min-w-0">
+                        <h3 class="truncate text-base font-semibold tracking-tight text-white/95">Service &amp; Sales Lead</h3>
+                        <p class="mt-1 truncate text-xs text-slate-300/85">Oscar’s Mowing Services, Brisbane</p>
+                      </div>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Sep 2021 – Jul 2023</span>
+                    </button>
+                    <div class="card-details px-5 py-5">
+                      <div class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <h3 class="text-base font-semibold tracking-tight text-white/95">Service &amp; Sales Lead</h3>
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                          <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">Oscar’s Mowing Services, Brisbane</span>
+                          <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">Sep 2021 – Jul 2023</span>
+                        </div>
+                      </div>
+                      <ul class="list-disc space-y-2 pl-5 text-sm text-slate-200/90">
+                        <li>Delivered economical landscaping for local clients (weeding, ant control, pet-area cleanups).</li>
+                        <li>Managed bookings, quotes, and repeat customer relationships.</li>
+                      </ul>
+                    </div>
+                  </article>
+                </section>
+
+                <!-- EDUCATION -->
+                <section id="page-education" class="page-panel hidden-panel grid gap-4 md:grid-cols-2">
+                  <!-- UQ -->
+                  <article class="hover-card rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]" data-hover-card>
+                    <button type="button" class="card-summary flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
+                      <div class="min-w-0">
+                        <h3 class="truncate text-base font-semibold tracking-tight text-white/95">University of Queensland</h3>
+                        <p class="mt-1 truncate text-xs text-slate-300/85">Mechanical Engineer</p>
+                      </div>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">2025 – Present</span>
+                    </button>
+                    <div class="card-details px-5 py-5">
+                      <div class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <h3 class="text-base font-semibold tracking-tight text-white/95">University of Queensland</h3>
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                          <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">Mechanical Engineer</span>
+                          <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">2025 – Present</span>
+                        </div>
+                      </div>
+                      <p class="text-sm text-slate-200/90">1st year Mechanical and Aerospace Engineering student</p>
+                    </div>
+                  </article>
+
+                  <!-- Kedron -->
+                  <article class="hover-card rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]" data-hover-card>
+                    <button type="button" class="card-summary flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
+                      <div class="min-w-0">
+                        <h3 class="truncate text-base font-semibold tracking-tight text-white/95">Senior Secondary (STEM &amp; Arts focus)</h3>
+                        <p class="mt-1 truncate text-xs text-slate-300/85">Kedron State High School, Brisbane</p>
+                      </div>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">2020 – 2025</span>
+                    </button>
+                    <div class="card-details px-5 py-5">
+                      <div class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <h3 class="text-base font-semibold tracking-tight text-white/95">Senior Secondary (STEM &amp; Arts focus)</h3>
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                          <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">Kedron State High School, Brisbane</span>
+                          <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">2020 – 2025</span>
+                        </div>
+                      </div>
+                      <p class="text-sm text-slate-200/90">
+                        Math Methods, Japanese, Engineering, Physics, Literature, English &amp; Lit Extension; first trombone in Symphony Orchestra, Wind Symphony, Brass Ensemble (AMEB L7).
+                      </p>
+                    </div>
+                  </article>
+
+                  <!-- Ascot -->
+                  <article class="hover-card rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]" data-hover-card>
+                    <button type="button" class="card-summary flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
+                      <div class="min-w-0">
+                        <h3 class="truncate text-base font-semibold tracking-tight text-white/95">Primary School</h3>
+                        <p class="mt-1 truncate text-xs text-slate-300/85">Ascot State School, Brisbane</p>
+                      </div>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">2013 – 2019</span>
+                    </button>
+                    <div class="card-details px-5 py-5">
+                      <div class="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                        <h3 class="text-base font-semibold tracking-tight text-white/95">Primary School</h3>
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                          <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">Ascot State School, Brisbane</span>
+                          <span class="rounded-lg bg-white/10 px-2 py-1 text-slate-300 ring-1 ring-white/20">2013 – 2019</span>
+                        </div>
+                      </div>
+                      <p class="text-sm text-slate-200/90">
+                        Core subjects, ensembles incl. Senior Band, Brass Ensemble, Stage Band (AMEB L4).
+                      </p>
+                    </div>
+                  </article>
+
+                  <!-- Skills snapshot -->
+                  <div class="rounded-2xl bg-white/10 p-5 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)] md:col-span-2">
+                    <div class="mb-3 flex items-center justify-between gap-3">
+                      <h3 class="text-base font-semibold tracking-tight text-white/95">Skills Snapshot</h3>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Updated</span>
+                    </div>
+                    <div class="flex flex-wrap justify-center gap-2 text-sm text-slate-200/90">
+                      <span class="whitespace-nowrap rounded-full bg-white/10 px-4 py-2 text-xs sm:text-sm ring-1 ring-white/20">Teamwork</span>
+                      <span class="whitespace-nowrap rounded-full bg-white/10 px-4 py-2 text-xs sm:text-sm ring-1 ring-white/20">Leadership</span>
+                      <span class="whitespace-nowrap rounded-full bg-white/10 px-4 py-2 text-xs sm:text-sm ring-1 ring-white/20">Communication</span>
+                      <span class="whitespace-nowrap rounded-full bg-white/10 px-4 py-2 text-xs sm:text-sm ring-1 ring-white/20">Planning</span>
+                      <span class="whitespace-nowrap rounded-full bg-white/10 px-4 py-2 text-xs sm:text-sm ring-1 ring-white/20">Technology (IT &amp; hardware)</span>
+                      <span class="whitespace-nowrap rounded-full bg-white/10 px-4 py-2 text-xs sm:text-sm ring-1 ring-white/20">Customer Service</span>
+                      <span class="whitespace-nowrap rounded-full bg-white/10 px-4 py-2 text-xs sm:text-sm ring-1 ring-white/20">Time Management</span>
+                      <span class="whitespace-nowrap rounded-full bg-white/10 px-4 py-2 text-xs sm:text-sm ring-1 ring-white/20">Problem Solving</span>
+                      <span class="whitespace-nowrap rounded-full bg-white/10 px-4 py-2 text-xs sm:text-sm ring-1 ring-white/20">Basic Japanese</span>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- HOBBIES -->
+                <section id="page-hobbies" class="page-panel hidden-panel grid gap-4 md:grid-cols-2">
+                  <!-- Helper: hobby card template repeated -->
+                  <article class="hover-card rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]" data-hover-card>
+                    <button type="button" class="card-summary flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
+                      <h3 class="truncate text-base font-semibold tracking-tight text-white/95">Scouting &amp; Leadership</h3>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Awards</span>
+                    </button>
+                    <div class="card-details px-5 py-5">
+                      <div class="mb-3 flex items-center justify-between gap-2">
+                        <h3 class="text-base font-semibold tracking-tight text-white/95">Scouting &amp; Leadership</h3>
+                        <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Awards</span>
+                      </div>
+                      <p class="text-sm text-slate-200/90">
+                        Grey Wolf Award (2018), Australian Scout Medallion (2022), King’s Scout Award (2025). Venturer service leader at Australian Jamboree 2025. Regularly plan and run activities.
+                      </p>
+                    </div>
+                  </article>
+
+                  <article class="hover-card rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]" data-hover-card>
+                    <button type="button" class="card-summary flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
+                      <h3 class="truncate text-base font-semibold tracking-tight text-white/95">Baseball</h3>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Club &amp; Rep</span>
+                    </button>
+                    <div class="card-details px-5 py-5">
+                      <div class="mb-3 flex items-center justify-between gap-2">
+                        <h3 class="text-base font-semibold tracking-tight text-white/95">Baseball</h3>
+                        <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Club &amp; Rep</span>
+                      </div>
+                      <p class="text-sm text-slate-200/90">
+                        Playing since 2016; state/national representative level since 2017. Premier team for Windsor Royals Senior League 2023/24 season.
+                      </p>
+                    </div>
+                  </article>
+
+                  <article class="hover-card rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]" data-hover-card>
+                    <button type="button" class="card-summary flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
+                      <h3 class="truncate text-base font-semibold tracking-tight text-white/95">Mountain Biking &amp; Cycle Touring</h3>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Outdoors</span>
+                    </button>
+                    <div class="card-details px-5 py-5">
+                      <div class="mb-3 flex items-center justify-between gap-2">
+                        <h3 class="text-base font-semibold tracking-tight text-white/95">Mountain Biking &amp; Cycle Touring</h3>
+                        <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Outdoors</span>
+                      </div>
+                      <p class="text-sm text-slate-200/90">BVRT completed three times; introducing bikepacking to Scouts and peers.</p>
+                    </div>
+                  </article>
+
+                  <article class="hover-card rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]" data-hover-card>
+                    <button type="button" class="card-summary flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
+                      <h3 class="truncate text-base font-semibold tracking-tight text-white/95">Karate (Go-Kan-Ryu)</h3>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Brown Belt</span>
+                    </button>
+                    <div class="card-details px-5 py-5">
+                      <div class="mb-3 flex items-center justify-between gap-2">
+                        <h3 class="text-base font-semibold tracking-tight text-white/95">Karate (Go-Kan-Ryu)</h3>
+                        <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Brown Belt</span>
+                      </div>
+                      <p class="text-sm text-slate-200/90">
+                        Training since 2011; assisting in junior dojo sessions and working toward 1st Black Tip.
+                      </p>
+                    </div>
+                  </article>
+
+                  <article class="hover-card rounded-2xl bg-white/10 p-0 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]" data-hover-card>
+                    <button type="button" class="card-summary flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
+                      <h3 class="truncate text-base font-semibold tracking-tight text-white/95">CAD and 3D Printing</h3>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Maker</span>
+                    </button>
+                    <div class="card-details px-5 py-5">
+                      <div class="mb-3 flex items-center justify-between gap-2">
+                        <h3 class="text-base font-semibold tracking-tight text-white/95">CAD and 3D Printing</h3>
+                        <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Maker</span>
+                      </div>
+                      <p class="text-sm text-slate-200/90">
+                        Owner of a Bambu Labs A1, and enjoy using Autodesk Inventor and Blender to create new things to be printed.
+                      </p>
+                    </div>
+                  </article>
+                </section>
+
+                <!-- REFERENCES -->
+                <section id="page-references" class="page-panel hidden-panel grid gap-4 md:grid-cols-2">
+                  <div class="rounded-2xl bg-white/10 p-5 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]">
+                    <div class="mb-3 flex items-center justify-between gap-3">
+                      <h3 class="text-base font-semibold tracking-tight text-white/95">Rachel Beckett</h3>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Mother</span>
+                    </div>
+                    <p class="text-sm text-slate-200/90">Available on request.</p>
+                  </div>
+
+                  <div class="rounded-2xl bg-white/10 p-5 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]">
+                    <div class="mb-3 flex items-center justify-between gap-3">
+                      <h3 class="text-base font-semibold tracking-tight text-white/95">Employers &amp; Team Leaders</h3>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Workplace supervisors</span>
+                    </div>
+                    <p class="text-sm text-slate-200/90">Available on request.</p>
+                  </div>
+                </section>
+
+                <!-- DOWNLOAD -->
+                <section id="page-download" class="page-panel hidden-panel grid gap-4">
+                  <div class="rounded-2xl bg-white/10 p-5 ring-1 ring-white/20 backdrop-blur-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.6)]">
+                    <div class="mb-3 flex items-center justify-between gap-3">
+                      <h3 class="text-base font-semibold tracking-tight text-white/95">Download my resume (Oscar_Beckett_CV_2.docx)</h3>
+                      <span class="shrink-0 rounded-lg bg-white/10 px-2 py-1 text-xs text-slate-300 ring-1 ring-white/20">Printable</span>
+                    </div>
+                    <p class="mb-4 text-sm text-slate-200/90">
+                      Click below to download the Word document version of my resume.
+                    </p>
+                    <a
+                      href="./Oscar_Beckett_CV_2.docx"
+                      download
+                      class="inline-flex items-center gap-2 rounded-xl bg-white/90 px-4 py-2 font-medium text-slate-900 ring-1 ring-white/30 transition hover:bg-white"
+                    >
+                      ⬇️ Download Resume
+                    </a>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <footer class="flex items-center justify-between px-1 text-xs text-slate-400/80">
+            <button id="footer-hover" class="flex items-center gap-2 cursor-pointer" type="button">
+              <span class="inline-flex h-3.5 w-3.5 items-center justify-center">🔗</span>
+              <span id="footer-text">Built with ChatGPT 5 Pro Codex.</span>
+            </button>
+            <span class="opacity-75">© <span id="year-span"></span> Oscar Beckett</span>
+          </footer>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      // Values for clipboard copy
+      const emailValue = "oscar.p.beckett@gmail.com";
+      const phoneValue = "+61434470221";
+
+      const pages = ["experience", "education", "hobbies", "references", "download"];
+      let currentPage = "experience";
+
+      function showToast(text) {
+        const toast = document.getElementById("toast");
+        const label = document.getElementById("toast-text");
+        label.textContent = text;
+        toast.classList.remove("opacity-0", "pointer-events-none");
+        toast.style.opacity = "1";
+        toast.style.transform = "translate(-50%, 0)";
+        clearTimeout(showToast._timer);
+        showToast._timer = setTimeout(() => {
+          toast.style.opacity = "0";
+          toast.style.transform = "translate(-50%, -10px)";
+          setTimeout(() => {
+            toast.classList.add("opacity-0", "pointer-events-none");
+          }, 200);
+        }, 1500);
+      }
+
+      function copyToClipboard(text, label) {
+        const done = () => showToast("Copied " + label + " to clipboard");
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done).catch(fallback);
+        } else fallback();
+
+        function fallback() {
+          try {
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+            done();
+          } catch (e) {
+            console.warn("Clipboard unsupported", e);
+          }
+        }
+      }
+
+      function setPage(page) {
+        if (!pages.includes(page)) return;
+        currentPage = page;
+
+        // Sidebar active styles
+        document.querySelectorAll("#sidebar-nav button[data-page]").forEach((btn) => {
+          const key = btn.getAttribute("data-page");
+          if (key === page) {
+            btn.classList.add("bg-white/10", "ring-1", "ring-white/20");
+          } else {
+            btn.classList.remove("bg-white/10", "ring-1", "ring-white/20");
+          }
+        });
+
+        // Tab bar active styles
+        document.querySelectorAll(".tab-btn").forEach((btn) => {
+          const key = btn.getAttribute("data-page");
+          if (key === page) {
+            btn.classList.add("bg-white/10", "ring-1", "ring-white/20");
+          } else {
+            btn.classList.remove("bg-white/10", "ring-1", "ring-white/20");
+          }
+        });
+
+        // Panels
+        pages.forEach((key) => {
+          const panel = document.getElementById("page-" + key);
+          if (!panel) return;
+          if (key === page) {
+            panel.classList.remove("hidden-panel");
+            panel.classList.add("active-panel");
+          } else {
+            panel.classList.remove("active-panel");
+            panel.classList.add("hidden-panel");
+          }
+        });
+      }
+
+      function wireHoverCards() {
+        document.querySelectorAll("[data-hover-card]").forEach((card) => {
+          const open = () => card.classList.add("open");
+          const close = () => card.classList.remove("open");
+          card.addEventListener("mouseenter", open);
+          card.addEventListener("mouseleave", close);
+          // Tap toggle (mobile)
+          card.addEventListener("click", () => card.classList.toggle("open"));
+        });
+      }
+
+      function wireFooter() {
+        const btn = document.getElementById("footer-hover");
+        const span = document.getElementById("footer-text");
+        const base = "Built with ChatGPT 5 Pro Codex.";
+        const alt = "(I'm good with programs, not programming)";
+        btn.addEventListener("mouseenter", () => (span.textContent = alt));
+        btn.addEventListener("mouseleave", () => (span.textContent = base));
+      }
+
+      function wireQuickActions() {
+        document.querySelectorAll("[data-copy]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const type = btn.getAttribute("data-copy");
+            if (type === "email") copyToClipboard(emailValue, "email");
+            if (type === "phone") copyToClipboard(phoneValue, "phone number");
+          });
+        });
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("year-span").textContent = new Date().getFullYear();
+
+        // Wire nav + tabs
+        document.querySelectorAll("button[data-page]").forEach((btn) => {
+          btn.addEventListener("click", () => setPage(btn.getAttribute("data-page")));
+        });
+
+        // Wire behaviors
+        wireHoverCards();
+        wireFooter();
+        wireQuickActions();
+
+        // Initial page
+        setPage(currentPage);
+
+        // Tiny smoke checks
+        try {
+          pages.forEach((p) => console.assert(document.getElementById("page-" + p), "[TEST] missing page:", p));
+          console.log("[TEST] HTML smoke tests passed");
+        } catch (e) {
+          console.error("[TEST] HTML smoke tests error", e);
+        }
+      });
+    </script>
+  </body>
 </html>
+
